@@ -296,9 +296,11 @@ def location(city_cell):
         state=""
     if state=="Oh":
         state=""
-    elif state=="Ga" or "Ky" or "La" or "Md" or "Mo" or "Pa" or "Vt" or "Va":
+    elif state=="Ga" or state=="Ky" or state=="La" or state=="Md" or state=="Mo" \
+         or state=="Pa" or state=="Vt" or state=="Va":
         state=state+"."
-    elif state=="Nh" or "Nj" or "Nm" or "Ny" or "Nc" or "Nd" or "Ri" or "Sc" or "Sd":
+    elif state=="Nh" or state=="Nj" or state=="Nm" or state=="Ny" or state=="Nc" \
+         or state=="Nd" or state=="Ri" or state=="Sc" or state=="Sd":
         state=state[0]+"."+state[1].upper()+"."
     elif state=="Al":
         state="Ala."
@@ -366,7 +368,7 @@ def location(city_cell):
         state="Wyo."
     
     #combine city, state
-    if city=="":
+    if city=="" or city==" ":
         city_and_state="at large"
     elif state=="":
         city_and_state=city
@@ -490,6 +492,8 @@ def charge_fine(ch, fi, st, co, jt, jc, tn, tempi, sh):
         charge="failure to display license"        
     elif charge=="consume alcohol in m.v.":
         charge="consuming alcoholin a motor vehicle"        
+    elif charge=="operating veh. under influence":
+        charge="OVI"
 
     #status/plea
     status=""
@@ -554,190 +558,71 @@ def middle(name):
     parts=name.split(" ")
     newname=""
     for part in parts:
-        if len(part)==1 and part!="&":
+        if len(part)==1 and part.isalpha():
             part=part+"."
         if newname=="":
             newname=part
         else:
             newname+=" "+part
 
-    pattern=r"  "
-    match=re.search(pattern, newname)
-    if match:
-        newname=newname[:match.start()]+" "+newname[match.end():]
-    pattern=r"  "
-    match=re.search(pattern, newname)
-    if match:
-        newname=newname[:match.start()]+" "+newname[match.end():]
-    pattern=r"  "
-    match=re.search(pattern, newname)
-    if match:
-        newname=newname[:match.start()]+" "+newname[match.end():]
+    newname.replace("  "," ")
 
     return(newname)
 
-# find & replace using regular expressions
-# Regular expressions are probably not necessary here and could be replaced with:
-#       info=info.replace(target, new) 
+# find & replace function for MCT_civil, CCP_civil files
 def findreplace(info):
-    pattern=r" Llc"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" LLC"+info[match.end():]
-    pattern=r" Ll"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" LLC"+info[match.end():]
-    pattern=r" L.L.C."
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" LLC"+info[match.end():]
-    pattern=r", LLC"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" LLC"+info[match.end():]
-    pattern=r" Incorportated"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" Inc."+info[match.end():]
-    pattern=r", Inc"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" Inc."+info[match.end():]
-    pattern=r" Corporation"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" Corp"+info[match.end():]
-    pattern=r", Corp"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" Corp."+info[match.end():]
-    pattern=r" : "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+": "+info[match.end():]
-    pattern=r" Iii"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" III"+info[match.end():]
-    pattern=r" Ii"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" II"+info[match.end():]
-    pattern=r" Jr"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" Jr."+info[match.end():]
-    pattern=r" \.\."
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" ."+info[match.end():]
-    pattern=r" Sr"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" Sr."+info[match.end():]
-    pattern=r"Lvnv"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+"LVNV"+info[match.end():]
-    pattern=r"Sac "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+"SAC "+info[match.end():]
-    pattern=r" \(Usa\) Na"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+""+info[match.end():]
-    pattern=r" \(Usa\) N.A."
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+""+info[match.end():]
-    pattern=r" \(Usa\), Na"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+""+info[match.end():]
-    pattern=r" \(Usa\), N.A."
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+""+info[match.end():]
-    pattern=r" N.A."
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+""+info[match.end():]
-    pattern=r" Of "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" of "+info[match.end():]
-    pattern=r"\.\."
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+"."+info[match.end():]
-    pattern=r"Spv I."
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+"SPV I"+info[match.end():]
-    pattern=r"1St "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+"1st "+info[match.end():]
-    pattern=r"\.00"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+""+info[match.end():]
-    pattern=r"  "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" "+info[match.end():]
-    pattern=r"  "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" "+info[match.end():]
-    pattern=r"  "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" "+info[match.end():]
-    pattern=r"  "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" "+info[match.end():]
-
-    return(info)
-
-#find & replace using regular expressions for CCP_civil.py
-def findreplace(info):
-    pattern=r"  "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" "+info[match.end():]
-    pattern=r" Llc"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" LLC"+info[match.end():]
-    pattern=r" Of "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" of "+info[match.end():]
-    pattern=r" And "
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+" and "+info[match.end():]
-    pattern=r"Jpmorgan"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+"JPMorgan"+info[match.end():]
-    pattern=r"Unknown Spouse"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+"unknown spouse"+info[match.end():]
-    pattern=r"Unk Spouse If Any"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+"unknown spouse"+info[match.end():]
-    pattern=r"Us Bank"
-    match=re.search(pattern, info)
-    if match:
-        info=info[0:match.start()]+"U.S. Bank"+info[match.end():]
-
+    info=info.replace(r"  ", " ")
+    info=info.replace(r"  ", " ")
+    info=info.replace(r"  ", " ")
+    info=info.replace(r" Llc"," LLC")
+    info=info.replace(r" Ll"," LLC")
+    info=info.replace(r" L.L.C."," LLC")
+    info=info.replace(r", LLC"," LLC")
+    info=info.replace(r" Incorportated"," Inc.")
+    info=info.replace(r", Inc"," Inc.")
+    info=info.replace(r" Inc: ",r" Inc.: ")
+    info=info.replace(r" Inc "," Inc. ")
+    info=info.replace(r" Corporation"," Corp.")
+    info=info.replace(r", Corp"," Corp.")
+    info=info.replace(r" Corp: ",r" Corp.: ")
+    info=info.replace(r" : ",": ")
+    info=info.replace(r" Iii"," III")
+    info=info.replace(r" Ii"," II")
+    info=info.replace(r" Jr"," Jr.")
+    info=info.replace(r"..",".")
+    info=info.replace(r" Sr"," Sr.")
+    info=info.replace(r"Lvnv","LVNV")
+    info=info.replace(r"Sac ","SAC ")
+    info=info.replace(r" (Usa) Na","")
+    info=info.replace(r" (Usa), Na","")
+    info=info.replace(r" (Usa) N.A.","")
+    info=info.replace(r" (Usa), N.A.","")
+    info=info.replace(r" N.A.","")
+    info=info.replace(r" Na "," ")
+    info=info.replace(r"( Usa)","")
+    info=info.replace(r" Of "," of ")
+    info=info.replace(r"Spv I.","SPV I")
+    info=info.replace(r"1St ","1st ")
+    info=info.replace(r"Jh ","JH ")
+    info=info.replace(r"Ih ","IH ")
+    info=info.replace(r"Pca ","PCA ")
+    info=info.replace(r"Cu ","CU ")
+    info=info.replace(r".00","")
+    info=info.replace(r" And "," and ")
+    info=info.replace(r"Jpmorgan","JPMorgan")
+    info=info.replace(r"Unknown Spouse","")
+    info=info.replace(r"Unk Spouse If Any","")
+    info=info.replace(r"Us Bank","U.S. Bank")
+    info=info.replace(r"'S",r"'s")
+    info=info.replace(r"Jane Doe, ","")
+    info=info.replace(r"John Doe, ","")
+    info=info.replace(r"Doe, ","")
+    info=info.replace(r"Fsb ","FSB ")
+    info=info.replace(r"Ntl Collegiate Stndt Ln Trst","National Collegiate Student Loan Trust")
+    info=info.replace(r"  "," ")
+    info=info.replace(r", , ",r", ")
+    info=info.replace(r" : ",r": ")
+    
     return(info)
 
 
@@ -1376,6 +1261,5 @@ def fair_OC():
 
 
 
-
-GUI()
+window=GUI()
 
