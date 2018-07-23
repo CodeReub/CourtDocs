@@ -5,6 +5,10 @@ from openpyxl import load_workbook
 from datetime import date, datetime
 import re
 
+## Global variable LOCAL_TOWNS sets a list of local municipalities
+LOCAL_TOWNS=["Belle Center", "Degraff", "East Liberty", "Huntsville", "Lakeview",
+             "Lewistown", "Middleburg", "Quincy", "Ridgeway", "Rushsylvania",
+             "Russells Point", "West Liberty", "West Mansfield", "Zanesfield"]
 
 
 # main, establishes the Tkinter interface window
@@ -75,6 +79,8 @@ class GUI:
                                   variable=window.radio_var, value=6)#, command=window.radio_var.set(6))
         rb7 = tkinter.Radiobutton(window, text='Fair Premiums',
                                   variable=window.radio_var, value=7)#, command=window.radio_var.set(7))
+        rb8 = tkinter.Radiobutton(window, text='Grand Jury',
+                                  variable=window.radio_var, value=8)#, command=window.radio_var.set(8))
         contbutton = tkinter.Button(window, text="Continue", command=lambda:GUI.pickprog(window.radio_var.get()))
 #        exitbutton = tkinter.Button(window, text="Continue",
  #                                   command=window.destroy())
@@ -88,7 +94,8 @@ class GUI:
         rb5.grid(column=0, row=7)
         rb6.grid(column=0, row=8)
         rb7.grid(column=0, row=9)
-        contbutton.grid(column=0, row=12)
+        rb8.grid(column=0, row=10)
+        contbutton.grid(column=0, row=13)
 
 
 
@@ -112,8 +119,8 @@ class GUI:
             marriages()
         elif opt==7:
             fair_OC()
-    #    else:
-    #        ??
+        elif opt==8:
+            grand_jury()
 
 # file dialog for opening files
 def load_file():
@@ -164,7 +171,7 @@ def name_field1(nm):
     if last_name[0:2]=="Mc":
         last_name=last_name[0:2]+last_name[2].upper()+last_name[3:len(last_name)]
     if last_name[0:5]=="Levan":
-        last_name=last_name[0:2]+last_name[2].upper()+last_name[3:len(last_name)]
+        last_name="LeVan"
 
     #define first name & add periods
     try:
@@ -748,6 +755,114 @@ def check_line(lin):
     return(lin)
 
 
+# the function to set the charge for grand jury reports
+def charge_formatter(chargeline):
+
+    # The regular expression finds ORC titles
+    # (usually represented by 29xx.xxxx: or 45xx.xxxx:) (but not always)
+    # 	[24] = first character either 2 or 4   (this was replaced with \d)
+    # 	[95] = second character either 9 or 5  (this was replaced with \d)
+    # 	\d\d = two more numbers
+    # 	\. = a literal period/point/dot character
+    # 	.*?: = any additional character up to the first : (? = non-greedy)
+    pattern = r"\d\d\d\d\..*?:"
+    # the substitution with null string
+    chargeline = re.sub(pattern, "", chargeline)
+
+    # replacing charge codes with text explanations
+    chargeline=chargeline.replace(" F1", ", felonies of the first-degree")
+    chargeline=chargeline.replace(" F2", ", felonies of the second-degree")
+    chargeline=chargeline.replace(" F3", ", felonies of the third-degree")
+    chargeline=chargeline.replace(" F4", ", felonies of the fourth-degree")
+    chargeline=chargeline.replace(" F5", ", felonies of the fifth-degree")
+    chargeline=chargeline.replace(" M1", ", misdemeanors of the first-degree")
+    chargeline=chargeline.replace(" M2", ", misdemeanors of the second-degree")
+    chargeline=chargeline.replace(" M3", ", misdemeanors of the third-degree")
+    chargeline=chargeline.replace(" M4", ", misdemeanors of the fourth-degree")
+    chargeline=chargeline.replace(" MM", ", minor misdemeanors")
+    chargeline=chargeline.lower()
+
+    # replacing funky words
+    chargeline=chargeline.replace("marihuana", "marijuana")
+    chargeline=chargeline.replace("l.s.d.", "LSD")
+
+    #splitting the charges into separare fields
+    charges = chargeline.split(" | ")
+
+    # The following section of code attempts to consolidate multiple charges
+    # of the same crime into a single phrase
+    # (i.e. "three counts of theft, felonies of the fifth-degree")
+
+    # the dict dictionary object is a temporary holder of the various charges
+    dict={}
+    for charge in charges:
+        if charge not in dict:
+            dict[charge] = 1
+        else:
+            dict[charge] += 1
+
+    newcharges=""
+
+    # The first 9 numbers get words (per AP style)
+    for item in dict:
+        if dict[item] <10:
+            if dict[item]==1:
+                dict[item]="one"
+            if dict[item]==2:
+                dict[item]="two"
+            if dict[item]==3:
+                dict[item]="three"
+            if dict[item]==4:
+                dict[item]="four"
+            if dict[item]==5:
+                dict[item]="five"
+            if dict[item]==6:
+                dict[item]="six"
+            if dict[item]==7:
+                dict[item]="seven"
+            if dict[item]==8:
+                dict[item]="eight"
+            if dict[item]==9:
+                dict[item]="nine"
+        # more than 10 charges is the numeric value (converted to a string)
+        else:
+            dict[item]=str(dict[item])
+
+        if dict[item]=="one":
+            item = item.replace("felonies", "a felony")
+            item = item.replace("misdemeanors", "a misdemeanor")
+            item = item.replace("minor a misdemeanor", "a minor misdemeanor")
+            newcharges += ("one count of " + item+ "; ")
+        else:
+            newcharges += (dict[item] + " counts of " + item + "; ")
+
+    newcharges=newcharges.replace(" , ", ", ")
+
+    return newcharges.strip(r'"')
+
+# a function to format addresses for the grand jury report
+def address_formatter(address):
+    # sample = 7455 Walnut , Belle Center, OH 43310, Logan County
+    address = address.split(', ')
+    new_address=""
+    try:
+        if "large" in address[0].lower() or address[0]=="":
+            new_address="at large"
+        elif address[2][0:2]!="OH":
+            address[1]+=(", "+address[2][0:1])
+            new_address=location(address[1])
+        elif address[1].title()=="Bellefontaine":
+            new_address = address[0]
+        elif address[1].title() in LOCAL_TOWNS:
+            new_address = address[0]+", "+address[1]
+        else:
+            new_address = address[1]
+    except IndexError:
+        pass
+        
+    return new_address
+
+
 
 # bonds.py --- body of the original program
 def MCT_bonds():
@@ -862,7 +977,7 @@ def marriages():
     writefile.write("Marriages\n")
     writefile.write("The following couples recently filed for marriage licenses in Logan County Family Court:\n")
 
-  #main loop
+    #main loop
     party1=""
     party2=""
     oldcase=""
@@ -881,7 +996,6 @@ def marriages():
             oldcase=case
             fdate=datetime.strptime(data[2][0:10], "%m/%d/%Y")
             filedate=AP_Style_date(fdate)
-            print(filedate)
         party=data[5][0:11]  #party is party type (i.e App 1 or 2), not the party name
         party_name=str(data[4].title()) #this is the party name
         while party_name[len(party_name)-1]==" ":
@@ -889,7 +1003,6 @@ def marriages():
         while party_name[0]==" ":
             party_name=party_name[1:len(party_name)]    
         party_name=name_field(party_name) #this runs the name_field() function
-        print(party_name, party)  ###this is an unnecesary line for debugging purposes only###
         if party=="Applicant 1":
             party1=party_name
             DOB=datetime.strptime(data[6][0:10], "%m/%d/%Y")
@@ -1193,7 +1306,8 @@ def CCP_civil():
 def fair_OC():
     fn=load_file()
     f1=open(fn,"r")
-    f2=open(cl+".txt", "w")
+    outname=input("Output class name: ")
+    f2=open(outname+".txt", "w")
     cl=""
     cat=""
     gr=""
@@ -1203,6 +1317,7 @@ def fair_OC():
     group=""
 
     for line in f1:
+        print("new line")
         if line!=None and line!="" and line!=" " and line!="\n":
             lin=str(line[0:len(line)-1])
             lin=lin.replace("  ", " ")
@@ -1238,6 +1353,7 @@ def fair_OC():
                 first=""
                 second=""
                 third=""
+                print("yes")
                 
                 # start new category
                 lin=lin.capitalize()
@@ -1256,8 +1372,66 @@ def fair_OC():
                     data[1]=""
                 group=data[2].capitalize()
 
+
     f1.close()
     f2.close()
+
+
+## grandjury.py -- the grand jury report
+def grand_jury():
+
+    fn=load_file()
+    readfile = open(fn,"r")
+    writefile = open("grand jury.txt", 'w')
+
+    name=""
+    age=""
+    address=""
+    charges=""
+
+    for line in readfile:
+        # remove end of line characters
+        line = line.strip()
+
+        # split the line by tabs
+        line = line.split(r'","')
+        print(line)
+
+        # set the name field and call the function
+        name = name_field1(line[0].strip(r'"'))
+
+        # handle the date of birth field
+        try:
+            line[2]=line[2].strip(r'"')
+            DOB = datetime.strptime(line[2], "%m/%d/%Y")
+            age = str(calculate_age(DOB))
+        except (IndexError, ValueError) as error:
+            pass
+        
+        try:
+            address = address_formatter(line[1].strip(r'"'))
+        except IndexError:
+            pass
+        
+        try:
+            charges = charge_formatter(line[3].strip(r'"'))
+        except IndexError:
+            pass
+        
+        newline = name + ", " + age + ", of " + address + ": " + charges + "\n"
+        newline=newline.replace("  ", " ")
+        newline=newline.replace("  ", " ")
+        newline=newline.replace(" St ", " St. ")
+        newline=newline.replace(" Ave ", " Ave. ")
+        newline=newline.replace(" Ct", " Court")
+        newline=newline.replace("of at large", "at large")
+        newline=newline.replace(" , ", ", ")
+        print(newline)
+        writefile.write(newline)
+
+    # close both files before exiting the routine
+    readfile.close()
+    writefile.close()
 
 
 
